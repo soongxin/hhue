@@ -25,6 +25,8 @@ import fnmatch
 import sys
 import traceback
 import subprocess
+root_path = os.getcwd()
+
 
 LOG = logging.getLogger(__name__)
 
@@ -220,8 +222,10 @@ def entry():
   try:
     # Let django handle the normal execution
     if os.getenv("DESKTOP_PROFILE"):
+      print('if', sys.argv)
       _profile(prof_id, lambda: execute_from_command_line(sys.argv))
     else:
+      print('else', sys.argv)
       execute_from_command_line(sys.argv)
   except ImproperlyConfigured as e:
     if len(sys.argv) > 1 and sys.argv[1] == 'is_db_alive' and 'oracle' in str(e).lower():
@@ -257,3 +261,7 @@ def _profile(prof_id, func):
     # Sort the calls by time spent and show top 50
     pstats.Stats(PROF_DAT).sort_stats('time').print_stats(50)
     print("Complete profile data in %s" % (PROF_DAT,), file=sys.stderr)
+
+
+if __name__ == '__main__':
+  entry()

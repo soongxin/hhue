@@ -60,3 +60,7 @@ sqlparse==0.4.1
 tablib==0.13.0
 thrift==0.13.0
 thrift-sasl==0.4.2
+pycrypto==2.6.1
+jwcrypto==0.6.0
+python-jose==3.0.1
+

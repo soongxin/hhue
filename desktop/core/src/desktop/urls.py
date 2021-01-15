@@ -62,6 +62,7 @@ admin.autodiscover()
 
 # Some django-wide URLs
 dynamic_patterns = [
+  url(r'^hue/login/callback$', desktop_auth_views.dt_login_callback),
   url(r'^hue/accounts/login', desktop_auth_views.dt_login, name='desktop_auth_views_dt_login'),
   url(r'^accounts/login/?$', desktop_auth_views.dt_login), # Deprecated
   url(r'^accounts/logout/?$', desktop_auth_views.dt_logout, {'next_page': '/'}),

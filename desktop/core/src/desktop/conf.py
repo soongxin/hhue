@@ -2368,3 +2368,31 @@ def is_gs_enabled():
 def has_gs_access(user):
   from desktop.auth.backend import is_admin
   return user.is_authenticated and user.is_active and (is_admin(user) or user.has_hue_permission(action="gs_access", app="filebrowser"))
+
+
+SSO = ConfigSection(
+  key='sso',
+  help=_("""Configuration options for sso authenticate"""),
+  members=dict(
+    HOST=Config(
+      key='url',
+      help=_('sso authenticate url'),
+      type=str,
+    ),
+    SECRET_KEY=Config(
+      key='secret_key',
+      help=_('sso authenticate secret key'),
+      type=str
+      ),
+    JWT_SIGN_KEY=Config(
+      key='jwt_sign_key',
+      help=_('sso authenticate jwt key sign key'),
+      type=str
+    ),
+    JWT_ENC_KEY=Config(
+      key='jwt_enc_key',
+      help=_('sso authenticate jwt enc key'),
+      type=str
+    )
+  )
+)

@@ -150,8 +150,8 @@
   # Default LDAP/PAM/.. username and password of the hue user used for authentications with other services.
   # Inactive if password is empty.
   # e.g. LDAP pass-through authentication for HiveServer2 or Impala. Apps can override them individually.
-  ## auth_username=hue
-  ## auth_password=
+  # auth_username=yangxiaoqian01
+  # auth_password=X#kk3ohug#Mr9Zen
 
   # Default encoding for site data
   ## default_site_encoding=utf-8
@@ -192,6 +192,7 @@
   # For example, to restrict to your local domain and FQDN, the following value can be used:
   # ^\/.*$,^http:\/\/www.mydomain.com\/.*$
   ## redirect_whitelist=^(\/[a-zA-Z0-9]+.*|\/)$
+ redirect_whitelist=^\/.*$,^http:\/\/172.16.2.52:8080\/.*$
 
   # Comma separated list of apps to not load at server startup.
   # e.g.: pig,zookeeper
@@ -314,10 +315,11 @@
   # Turn on the direct link sharing of saved document.
   ## enable_link_sharing=true
 
-  # Hue uses Localstorage to keep the users settings and database preferences.
-  # Please make this value true in case local storage should not be used
-  # default value is false
-  ## disable_local_storage = false
+  [[sso]]
+    url=http://172.16.2.52:8080
+    secret_key=0KVXaN-nlXafRUwg
+    jwt_sign_key=K-9Nwl0UdVtkObDF81-uveuArKPVF4oVg0weQTt9mall8CHIsOlvMSnzi5tZ-xC1V6ALPWe_RfP5981KLL8PTQ
+    jwt_enc_key=0KVXaN-nlXafRUwgsr3H_l6hkufY7lzoTy7OVI5pN0E
 
   # Administrators
   # ----------------
@@ -363,7 +365,8 @@
     # - libsaml.backend.SAML2Backend
     # - desktop.auth.backend.OIDCBackend (New oauth, support Twitter, Facebook, Google+ and Linkedin
     # Multiple Authentication backend combinations are supported by specifying a comma-separated list in order of priority.
-    ## backend=desktop.auth.backend.AllowFirstUserDjangoBackend
+    # backend=desktop.auth.backend.AllowFirstUserDjangoBackend
+    backend=desktop.auth.backend.LdapBackend
 
     # Class which defines extra accessor methods for User objects.
     ## user_aug=desktop.auth.backend.DefaultUserAugmentor
@@ -435,12 +438,14 @@
 
     # The search base for finding users and groups
     ## base_dn="DC=mycompany,DC=com"
+    base_dn="dc=we,dc=com"
 
     # URL of the LDAP server
-    ## ldap_url=ldap://auth.mycompany.com
+    # ldap_url=ldap://auth.mycompany.com
+    ldap_url=ldap://cdh-dw-8
 
     # The NT domain used for LDAP authentication
-    ## nt_domain=mycompany.com
+    nt_domain=""
 
     # A PEM-format file containing certificates for the CA's that
     # Hue will trust for authentication over TLS.
@@ -453,10 +458,11 @@
     # Distinguished name of the user to bind as -- not necessary if the LDAP server
     # supports anonymous searches
     ## bind_dn="CN=ServiceAccount,DC=mycompany,DC=com"
+    bind_dn="uid=admin,ou=dw,dc=we,dc=com"
 
     # Password of the bind user -- not necessary if the LDAP server supports
     # anonymous searches
-    ## bind_password=
+    bind_password=admin
 
     # Execute this script to produce the bind user password. This will be used
     # when 'bind_password' is not set.
@@ -465,6 +471,7 @@
     # Pattern for searching for usernames -- Use <username> for the parameter
     # For use when using LdapBackend for Hue authentication
     ## ldap_username_pattern="uid=<username>,ou=People,dc=mycompany,dc=com"
+    ldap_username_pattern="uid=<username>,ou=dw,dc=we,dc=com"
 
     # Create users in Hue when they try to login with their LDAP credentials
     # For use when using LdapBackend for Hue authentication
@@ -488,6 +495,7 @@
 
     # Use search bind authentication.
     ## search_bind_authentication=true
+    # search_bind_authentication=false
 
     # Choose which kind of subgrouping to use: nested or suboordinate (deprecated).
     ## subgroups=suboordinate
@@ -512,20 +520,24 @@
 
       # Base filter for searching for users
       ## user_filter="objectclass=*"
+      user_filter="objectClass=inetOrgPerson"
 
       # The username attribute in the LDAP schema
       ## user_name_attr=sAMAccountName
+      user_name_attr=uid
 
     [[[groups]]]
 
       # Base filter for searching for groups
       ## group_filter="objectclass=*"
+      group_filter="objectClass=groupOfNames"
 
       # The group name attribute in the LDAP schema
-      ## group_name_attr=cn
+      group_name_attr=cn
 
       # The attribute of the group object which identifies the members of the group
       ## group_member_attr=members
+      group_member_attr=member
 
     [[[ldap_servers]]]
 
@@ -645,11 +657,12 @@
     # Note for Oracle, options={"threaded":true} must be set in order to avoid crashes.
     # Note for Oracle, you can use the Oracle Service Name by setting "host=" and "port=" and then "name=<host>:<port>/<service_name>".
     # Note for MariaDB use the 'mysql' engine.
-    ## engine=sqlite3
-    ## host=
-    ## port=
-    ## user=
-    ## password=
+     engine=mysql
+     host=localhost
+     port=3006
+     user=root
+     password=sdycsx1993
+     name=hue
     # conn_max_age option to make database connection persistent value in seconds
     # https://docs.djangoproject.com/en/1.9/ref/databases/#persistent-connections
     ## conn_max_age=0
@@ -728,8 +741,6 @@
     ## ccache_path=/var/run/hue/hue_krb5_ccache
     # Path to kinit
     ## kinit_path=/path/to/kinit
-    # Set to false if renew_lifetime in krb5.conf is set to 0m
-    ## krb5_renewlifetime_enabled=true
 
     # Mutual authentication from the server, attaches HTTP GSSAPI/Kerberos Authentication to the given Request object
     ## mutual_authentication="OPTIONAL" or "REQUIRED" or "DISABLED"
@@ -1020,19 +1031,6 @@
     # # options='{"url": "presto://localhost:8080/hive/default", "has_impersonation": true}'
     # ## Kerberos.
     # # options='{"url": "presto://localhost:8080/hive/default?KerberosKeytabPath=/path/to/keytab&KerberosPrincipal=principal&KerberosRemoteServiceName=service&protocol=https"'
-    # ## LDAPS enabled over HTTPS.
-    # # options='{"url": "presto://username:password@localhost:8443/tpch/default","connect_args":"{\"protocol\": \"https\"}"}'
-    # ## Presto Session properties along with HTTPS.
-    # # options='{"url": "presto://username:password@localhost:8443/tpch/default","connect_args":"{\"protocol\": \"https\", \"session_props\": {\"query_max_run_time\": \"1m\"}}"}'
-    # ## Presto Session properties when HTTPS is not enabled.
-    # # options='{"url": "presto://username:password@localhost:8080/tpch/default","connect_args":"{\"session_props\": {\"query_max_run_time\": \"1m\"}}"}'
-
-    # [[[dasksql]]]
-    # name=Dask-SQL
-    # interface=sqlalchemy
-    # ## Specific options for connecting to the dask-sql server.
-    # ## Please note, that dask-sql uses the presto protocol.
-    # # options='{"url": "presto://localhost:8080/catalog/default"}'
 
     # [[[clickhouse]]]
     #   name=ClickHouse
@@ -1111,7 +1109,7 @@
 
     [[[default]]]
       # Enter the filesystem uri
-      fs_defaultfs=hdfs://localhost:8020
+      fs_defaultfs=hdfs://10.10.15.65:8020
 
       # NameNode logical name.
       ## logical_name=
@@ -1195,16 +1193,16 @@
 
   # Host where HiveServer2 is running.
   # If Kerberos security is enabled, use fully-qualified domain name (FQDN).
-  ## hive_server_host=localhost
+  hive_server_host=cdh-dw-2
 
   # Port where HiveServer2 Thrift server runs on.
-  ## hive_server_port=10000
+   hive_server_port=10000
 
   # Http thrift port for HiveServer2.
-  ## hive_server_http_port=10001
+   # hive_server_http_port=10000
 
   # Host where LLAP is running
-  ## llap_server_host = localhost
+  # llap_server_host = localhost
 
   # LLAP binary thrift port
   ## llap_server_port = 10500
@@ -1248,7 +1246,7 @@
   ## hive_metastore_port=9083
 
   # Hive configuration directory, where hive-site.xml is located
-  ## hive_conf_dir=/etc/hive/conf
+  # hive_conf_dir=/Users/songxin/Desktop/conf
 
   # Timeout in seconds for thrift calls to Hive service
   ## server_conn_timeout=120
@@ -1287,7 +1285,7 @@
 
   # Thrift version to use when communicating with HiveServer2.
   # Version 11 comes with Hive 3.0. If issues, try 7.
-  ## thrift_version=11
+   thrift_version=7
 
   # A comma-separated list of white-listed Hive configuration properties that users are authorized to set.
   ## config_whitelist=hive.map.aggr,hive.exec.compress.output,hive.exec.parallel,hive.execution.engine,mapreduce.job.queuename
@@ -1296,6 +1294,8 @@
   # e.g. Used for LDAP/PAM pass-through authentication.
   ## auth_username=hue
   ## auth_password=
+  auth_username=hue
+  auth_password=1234
 
   # Use SASL framework to establish connection to host.
   ## use_sasl=false
@@ -1333,10 +1333,6 @@
   # Port of the Impala Server
   ## server_port=21050
 
-  # Endpoint of the Impala Proxy Server, for example: '/endpoint'
-  # Note that SERVER_PORT will be used when set.
-  ## proxy_endpoint=
-
   # URL of the Impala Coordinator Server.
   ## coordinator_url=localhost:25000
 
@@ -1368,8 +1364,8 @@
 
   # Override the desktop default username and password of the hue user used for authentications with other services.
   # e.g. Used for LDAP/PAM pass-through authentication.
-  ## auth_username=hue
-  ## auth_password=
+  # auth_username=hue
+  # auth_password=hue
 
   # Username and password for Impala Daemon Web interface for getting Impala queries in JobBrowser
   ## daemon_api_username=
@@ -1483,9 +1479,6 @@
 
   # Redirect client to WebHdfs or S3 for file download. Note: Turning this on will override notebook/redirect_whitelist for user selected file downloads on WebHdfs & S3.
   ## redirect_download=false
-
-  # Optionally set this if you want a different home directory path. e.g. s3a://gethue.
-  ## remote_storage_home=s3a://gethue
 
 
 ###########################################################################
@@ -1652,15 +1645,6 @@
   # Show the Hive section for listing the query history and providing more troubleshooting information.
   ## enable_hive_query_browser=false
 
-  # Show the Queries section for listing Hive/Impala query history and providing more troubleshooting information.
-  ## enable_queries_list=false
-
-  # Use the proxy API instead of the ORM to access the query_store.
-  ## use_proxy=true
-
-  [[query_store]]
-    # URL of Query Store API server.
-    ##server_url=http://localhost:8080/
 
 ###########################################################################
 # Settings to configure Sentry / Security App.
@@ -1705,9 +1689,6 @@
 [useradmin]
   # Default home directory permissions
   ## home_dir_permissions=0755
-
-  # Disable to use umask from hdfs else new user home directory would be created with the permissions from home_dir_permissions
-  ## use_home_dir_permissions=true
 
   # The name of the default user group that users will be a member of
   ## default_user_group=default
@@ -1824,16 +1805,16 @@
 
 [libsentry]
   # Hostname or IP of server.
-  ## hostname=localhost
+  hostname=cdh-dw-7
 
   # Port the sentry service is running on.
-  ## port=8038
+  port=8038
 
   # Sentry configuration directory, where sentry-site.xml is located.
-  ## sentry_conf_dir=/etc/sentry/conf
+  # sentry_conf_dir=/etc/sentry/conf
 
   # Number of seconds when the privilege list of a user is cached.
-  ## privilege_checker_caching=300
+  # privilege_checker_caching=300
 
 
 ###########################################################################
@@ -1868,43 +1849,49 @@
       ## name=/tmp/sqlite.db
 
       # Database backend to use.
-      ## engine=sqlite
+    engine=mysql
+    name=hue
+    host=localhost
+    port=3306
+    user=root
+    password=sdycsx1993
+
 
       # Database options to send to the server when connecting.
       # https://docs.djangoproject.com/en/1.4/ref/databases/
       ## options={}
 
     # mysql, oracle, or postgresql configuration.
-    ## [[[mysql]]]
+     # [[[mysql]]]
       # Name to show in the UI.
-      ## nice_name="My SQL DB"
+      # nice_name="MySQL"
 
       # For MySQL and PostgreSQL, name is the name of the database.
       # For Oracle, Name is instance of the Oracle server. For express edition
       # this is 'xe' by default.
-      ## name=mysqldb
+       # name=hive
 
       # Database backend to use. This can be:
       # 1. mysql
       # 2. postgresql
       # 3. oracle
-      ## engine=mysql
+       # engine=mysql
 
       # IP or hostname of the database to connect to.
-      ## host=localhost
+       # host=localhost
 
       # Port the database server is listening to. Defaults are:
       # 1. MySQL: 3306
       # 2. PostgreSQL: 5432
       # 3. Oracle Express Edition: 1521
-      ## port=3306
+       # port=3306
 
       # Username to authenticate with when connecting to the database.
-      ## user=example
+       # user=root
 
       # Password matching the username to authenticate with when
       # connecting to the database.
-      ## password=example
+       # password=sdycsx1993
 
       # Database options to send to the server when connecting.
       # https://docs.djangoproject.com/en/1.4/ref/databases/
@@ -1944,9 +1931,6 @@
 
   # Signed certificate to send along with encrypted metadata.
   ## cert_file=
-
-  # If your computer and another computer that you are communicating with are not in synch regarding the computer clock, then here you can state how big a difference you are prepared to accept in milliseconds.
-  ## accepted_time_diff=0
 
   # Path to a file containing the password private key.
   ## key_file_password=/path/key
@@ -2174,5 +2158,8 @@
     ## enable_file_search=false
 
   [[prometheus]]
+
     # Configuration options for Prometheus API.
     ## api_url=http://localhost:9090/api
+
+

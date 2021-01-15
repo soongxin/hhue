@@ -24,6 +24,7 @@ import traceback
 import pkg_resources
 
 from django.utils.translation import ugettext as _
+from django.utils.module_loading import import_string
 
 import desktop
 
@@ -245,6 +246,27 @@ def load_libs():
   DESKTOP_MODULES.append(DesktopModuleInfo(desktop))
 
 
+def load_libs_by_path():
+  global DESKTOP_MODULES
+  global DESKTOP_LIBS
+
+  base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+  desktop_dir = os.path.dirname(os.path.dirname(base_dir))
+  lib_dir = os.path.join(desktop_dir, 'libs')
+  libs = os.listdir(lib_dir)
+  for lib in libs:
+    if not is_valid_module(os.path.join(lib_dir, lib), group='lib'):
+      continue
+    try:
+      m = _import_module_or_none(lib)
+      DESKTOP_LIBS.append(DesktopModuleInfo(m))
+    except:
+      from traceback import format_exc
+      print(format_exc())
+      LOG.warning('%s is not a valid python module')
+  DESKTOP_MODULES += DESKTOP_LIBS
+  DESKTOP_MODULES.append(DesktopModuleInfo(desktop))
+
 def load_apps(app_blacklist):
   """
   Loads the applications from the directories in APP_DIRS.
@@ -269,6 +291,52 @@ def load_apps(app_blacklist):
 
   LOG.debug("Loaded Desktop Applications: " + ", ".join(a.name for a in DESKTOP_APPS))
   DESKTOP_MODULES += DESKTOP_APPS
+
+
+def load_apps_by_path(app_blacklist):
+  """
+  Loads the applications from the directories in APP_DIRS.
+  Sets DESKTOP_MODULES and DJANGO_APPS globals in this module.
+  """
+  global DESKTOP_MODULES
+  global DESKTOP_APPS
+
+  if DESKTOP_APPS is not None:
+    raise Exception(_("load_apps has already been called."))
+
+  base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+  hue_dir = os.path.dirname(os.path.dirname(os.path.dirname(base_dir)))
+  apps_dir = os.path.join(hue_dir, 'apps')
+  desktop_apps_dir = os.path.join(os.path.join(hue_dir, 'desktop'), 'libs')
+  sdk_apps = []
+  for item in os.listdir(apps_dir):
+    if is_valid_module(os.path.join(apps_dir, item), 'application'):
+      sdk_apps.append(item)
+  for item in os.listdir(desktop_apps_dir):
+    if is_valid_module(os.path.join(desktop_apps_dir, item), 'application'):
+      sdk_apps.append(item)
+  DESKTOP_APPS = []
+
+  for sdk_app in sdk_apps:
+    if sdk_app not in app_blacklist:
+      # TODO: Remove once pig and jobsub have been migrated to editor
+      if 'oozie' in app_blacklist and sdk_app.name in ('pig', 'jobsub'):
+        LOG.warn('%s depends on oozie which is blacklisted, will skip loading %s app.' % (sdk_app.name, sdk_app.name))
+      else:
+        m = __import__(sdk_app)
+        dmi = DesktopModuleInfo(m)
+        DESKTOP_APPS.append(dmi)
+
+  LOG.debug("Loaded Desktop Applications: " + ", ".join(a.name for a in DESKTOP_APPS))
+  DESKTOP_MODULES += DESKTOP_APPS
+
+def is_valid_module(path, group=None):
+  if os.path.isdir(path) and os.path.exists(os.path.join(path, 'setup.py')):
+    with open(os.path.join(path, 'setup.py'), 'r') as f:
+      content = f.read()
+      if 'desktop.sdk.%s' % group in content:
+        return True
+  return False
 
 
 def get_desktop_module(name):

@@ -46,7 +46,7 @@ from azure.conf import is_abfs_enabled
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', '..', '..'))
 
-HUE_DESKTOP_VERSION = pkg_resources.get_distribution("desktop").version or "Unknown"
+HUE_DESKTOP_VERSION = "Unknown"
 NICE_NAME = "Hue"
 
 ENV_HUE_PROCESS_NAME = "HUE_PROCESS_NAME"
@@ -188,31 +188,47 @@ GTEMPLATE_DIRS = (
     get_desktop_root("core/templates"),
 )
 
+
+
 INSTALLED_APPS = [
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.staticfiles',
-
-    'django.contrib.admin',
-    'django_extensions',
-
-    # 'debug_toolbar',
-    #'south', # database migration tool
-
-    # i18n support
-    'babeldjango',
-
-    # Desktop injects all the other installed apps into here magically.
-    'desktop',
-
-    # App that keeps track of failed logins.
-    'axes',
-    'webpack_loader',
-    'django_prometheus',
-    'crequest',
-    #'django_celery_results',
+  "django.contrib.auth",
+  "django.contrib.contenttypes",
+  "django.contrib.sessions",
+  "django.contrib.sites",
+  "django.contrib.staticfiles",
+  "django.contrib.admin",
+  "django_extensions",
+  "babeldjango",
+  "desktop",
+  "axes",
+  "webpack_loader",
+  "django_prometheus",
+  "crequest",
+  "about",
+  "beeswax",
+  "filebrowser",
+  "hbase",
+  "help",
+  "hive",
+  "impala",
+  "jobbrowser",
+  "jobsub",
+  "metastore",
+  "oozie",
+  "pig",
+  "proxy",
+  "rdbms",
+  "search",
+  "security",
+  "spark",
+  "sqoop",
+  "useradmin",
+  "zookeeper",
+  "indexer",
+  "metadata",
+  "notebook",
+  "dashboard",
+  "kafka"
 ]
 
 WEBPACK_LOADER = {
@@ -290,6 +306,7 @@ _config_dir = os.getenv("HUE_CONF_DIR", get_desktop_root("conf"))
 
 # Libraries are loaded and configured before the apps
 appmanager.load_libs()
+appmanager.load_libs_by_path()
 _lib_conf_modules = [dict(module=app.conf, config_key=None) for app in appmanager.DESKTOP_LIBS if app.conf is not None]
 LOCALE_PATHS.extend([app.locale_path for app in appmanager.DESKTOP_LIBS])
 
@@ -303,9 +320,10 @@ desktop.redaction.register_log_filtering(desktop.conf.get_redaction_policy())
 
 # Activate l10n
 # Install apps
-appmanager.load_apps(desktop.conf.APP_BLACKLIST.get())
+# appmanager.load_apps(desktop.conf.APP_BLACKLIST.get())
+appmanager.load_apps_by_path(desktop.conf.APP_BLACKLIST.get())
 for app in appmanager.DESKTOP_APPS:
-  INSTALLED_APPS.extend(app.django_apps)
+  # INSTALLED_APPS.extend(app.django_apps)
   LOCALE_PATHS.append(app.locale_path)
 
 
@@ -620,12 +638,6 @@ file_upload_handlers = [
     'django.core.files.uploadhandler.MemoryFileUploadHandler',
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 ]
-
-if is_s3_enabled():
-  file_upload_handlers.insert(0, 'aws.s3.upload.S3FileUploadHandler')
-
-if is_abfs_enabled():
-  file_upload_handlers.insert(0, 'azure.abfs.upload.ABFSFileUploadHandler')
 
 
 FILE_UPLOAD_HANDLERS = tuple(file_upload_handlers)
