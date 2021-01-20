@@ -506,9 +506,20 @@ def _configs_from_dir(conf_dir):
   Generator to load configurations from a directory. This will
   only load files that end in .ini
   """
+  sorted_conf_file = []
   for filename in sorted(os.listdir(conf_dir)):
     if filename.startswith(".") or not filename.endswith('.ini'):
       continue
+    conf_name = filename.split('.')
+    if len(conf_name) == 2:
+      sorted_conf_file.append(filename)
+    else:
+      env = conf_name[-2]
+      curr_env = os.environ.get('DJANGO_ENV', '').lower()
+      if env == curr_env:
+        sorted_conf_file.append(filename)
+
+  for filename in sorted_conf_file:
     LOG.debug("Loading configuration from: %s" % filename)
     try:
       conf = ConfigObj(os.path.join(conf_dir, filename))
